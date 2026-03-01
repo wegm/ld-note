@@ -415,7 +415,27 @@ STYLE:
 - Section headers bold/underlined
 - No bullets except in Plan (dashed list)
 - Signature line at bottom: [Physician name, MD / Date-Time]
-- If handwriting is ambiguous, flag it — don't guess drug names or doses`;
+- If handwriting is ambiguous, flag it — don't guess drug names or doses
+
+NEWBORN DISCHARGE NOTE:
+Recognize this is a baby note (not L&D) when content includes DOB/TOB, Apgars, feeding, weight loss %.
+
+Structure:
+1. Maternal Summary — mode of delivery (SVD, assisted vaginal, C/S with indication), pregnancy complications if any
+2. Birth Details — DOB, TOB, GA, birth weight, Apgars (1 and 5 min), resuscitation (if any), NICU stay (if any)
+3. Hospital Course — DOL at discharge, weight loss % at 24/48hrs, voiding and stooling pattern, feeding (breast, donor milk, formula — note if going well or concerns)
+4. Investigations — TcB/TSB (if done), blood group (if relevant), CCHD screening, hearing screen, metabolic screen (newborn screen)
+5. Physical Examination — WNL unless otherwise stated
+6. Discharge Plan — follow-up timing, feeding plan, any pending results or concerns
+
+Defaults (assume unless told otherwise):
+- Healthy pregnancy, no maternal med/substance exposure
+- GBS negative
+- Physical exam WNL (document only abnormalities)
+- Vitamin K and erythromycin given (standard of care)
+- Metabolic screen: done/pending unless stated
+
+Same style rules: lean, no repetition, no filler. Signature line at bottom.`;
 
 let currentImageBase64 = null;
 let currentNoteText = '';
