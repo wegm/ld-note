@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="L&D Note">
+<title>L&D Note</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    background: #0a0a0a;
+    color: #e8e8e8;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .settings-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #888;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .settings-btn:hover { border-color: #555; color: #bbb; }
+
+  .setup-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .setup-screen h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .setup-screen p {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 24px;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  .setup-input {
+    width: 100%;
+    max-width: 340px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #e8e8e8;
+    font-size: 15px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    margin-bottom: 12px;
+    outline: none;
+  }
+
+  .setup-input:focus { border-color: #4a9eff; }
+  .setup-input::placeholder { color: #555; }
+
+  .btn {
+    width: 100%;
+    max-width: 340px;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary { background: #4a9eff; color: #fff; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .main-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .capture-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .capture-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    border: 3px solid #4a9eff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+  }
+
+  .capture-btn:active { transform: scale(0.93); background: #222; }
+
+  .capture-btn svg { width: 48px; height: 48px; fill: #4a9eff; }
+
+  .capture-label { font-size: 15px; color: #888; }
+
+  .file-input { display: none; }
+
+  .preview-area {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .preview-area.active { display: flex; }
+
+  .preview-img {
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid #222;
+  }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { max-width: none; }
+
+  .btn-secondary {
+    background: #1a1a1a;
+    color: #888;
+    border: 1px solid #333;
+  }
+
+  .processing {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .processing.active { display: flex; }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid #222;
+    border-top-color: #4a9eff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .processing p { font-size: 15px; color: #888; }
+
+  .result-area {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .result-area.active { display: flex; }
+
+  .result-text {
+    flex: 1;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #ddd;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+
+  .result-actions .btn { max-width: none; font-size: 14px; padding: 12px; }
+
+  .btn-success { background: #2d8a4e; color: #fff; }
+  .btn-copy { background: #333; color: #ddd; }
+
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #2d8a4e;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #a33; }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: #1a1a1a;
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .modal h3 { font-size: 18px; margin-bottom: 16px; }
+
+  .modal label {
+    font-size: 13px;
+    color: #888;
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+
+  .modal label:first-of-type { margin-top: 0; }
+
+  .modal input, .modal select {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #e8e8e8;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .modal input:focus { border-color: #4a9eff; }
+
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btns .btn { font-size: 14px; padding: 11px; }
+</style>
+</head>
+<body>
+
+<div id="setupScreen" class="setup-screen">
+  <h2>L&D Note</h2>
+  <p>Paste your Anthropic API key to get started. It's stored locally on this device only.</p>
+  <input type="password" id="apiKeyInput" class="setup-input" placeholder="sk-ant-...">
+  <input type="email" id="emailInput" class="setup-input" placeholder="Your email for notes">
+  <button class="btn btn-primary" id="saveSetupBtn" onclick="saveSetup()">Save & Start</button>
+</div>
+
+<div id="mainScreen" style="display:none; flex:1; flex-direction:column;">
+  <div class="header">
+    <h1>L&D Note</h1>
+    <button class="settings-btn" onclick="showSettings()">⚙️ Settings</button>
+  </div>
+  <div class="main-screen">
+    <div id="captureArea" class="capture-area">
+      <div class="capture-btn" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+      </div>
+      <p class="capture-label">Tap to photograph notepad</p>
+      <input type="file" id="fileInput" class="file-input" accept="image/*" capture="environment" onchange="handleImage(this)">
+    </div>
+    <div id="previewArea" class="preview-area">
+      <img id="previewImg" class="preview-img">
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="cancelImage()">Retake</button>
+        <button class="btn btn-primary" onclick="sendToClaudeAPI()">Parse Note</button>
+      </div>
+    </div>
+    <div id="processingArea" class="processing">
+      <div class="spinner"></div>
+      <p>Parsing your notes...</p>
+    </div>
+    <div id="resultArea" class="result-area">
+      <div id="resultText" class="result-text"></div>
+      <div class="result-actions">
+        <button class="btn btn-copy" onclick="copyNote()">Copy</button>
+        <button class="btn btn-success" onclick="emailNote()">📧 Email</button>
+        <button class="btn btn-secondary" onclick="newNote()">New</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h3>Settings</h3>
+    <label>API Key</label>
+    <input type="password" id="settingsApiKey" placeholder="sk-ant-...">
+    <label>Email</label>
+    <input type="email" id="settingsEmail" placeholder="you@email.com">
+    <label>Model</label>
+    <select id="settingsModel">
+      <option value="claude-sonnet-4-5-20250514">Claude Sonnet 4.5 (fast, cheaper)</option>
+      <option value="claude-opus-4-6">Claude Opus 4.6 (smartest)</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SYSTEM_PROMPT = `You are an L&D charting assistant for a GP Obstetrician in Kamloops, BC, Canada.
+
+Parse the handwritten notepad image into a structured expanded SOAP note.
+
+CLINICAL FRAMEWORK:
+- SOGC and PSBC guidelines as default reference standard
+- NST classification: Normal / Atypical / Abnormal (SOGC, not ACOG)
+- Name diagnoses when criteria are met. Do not hedge. (UPCR >30 + hypertension = preeclampsia.)
+- Flag anything clinically inconsistent or unclear
+
+NOTE STRUCTURE:
+1. Chief Complaint — reason for presentation + relevant pertinent negatives + presenting vitals/data
+2. Current Pregnancy — GA by T1 US, routine prenatal labs, US findings, complications
+3. Obstetrical History — prior pregnancies with outcomes
+4. Past Medical / Surgical History
+5. Allergies
+6. Current Medications
+7. Social History — ETOH, smoking, substances
+8. Examination — vitals (only what's available), abdominal, PV/SVE, POCUS, reflexes if indicated, NST
+9. Labs — relevant to presentation only
+10. Imaging — if applicable
+11. Assessment — clinical synthesis, diagnosis, rationale
+12. Plan — concise dashed list, no repetition
+
+DEFAULTS (assume unless told otherwise):
+- Social: Non-smoker, no alcohol in pregnancy, no substance use
+- Allergies: NKDA
+- Medications: None other than prenatals unless listed
+- Genetic screening: Unremarkable
+- Anatomy US: Normal, no previa
+- POCUS pre-IOL: Cephalic confirmed
+- Fetal movement: Normal
+- LOF/PV bleeding/contractions: None (unless presenting in labour)
+- Station: -3 for nullips/unengaged
+- OB history complications: Uncomplicated unless stated
+- Prenatal labs not mentioned: flag as "not documented"
+
+PERTINENT NEGATIVES BY PRESENTATION:
+- ↑BP/Preeclampsia: No HA, visual changes, epigastric/RUQ pain, dyspnea, no LOF, no PVB, FM normal, no contractions
+- PTL: Contraction pattern, cervical change, LOF, GBS, FFN
+- PPROM: Pooling, ferning, AmniSure, GBS, presentation, GBS prophylaxis plan
+- APH: Quantify, placental location, presentation, FHR
+
+STYLE:
+- Lean. No repetition. No filler.
+- Don't repeat "without severe features" in every line
+- Don't write "monitor for X" — she's admitted
+- Don't say "per SOGC guidelines" unless controversial
+- Use generic drug names (Cervidil, not Cervidil (dinoprostone))
+- Informed consent: Include specific risks for each intervention. Patient verbalized understanding and consented.
+- Section headers bold/underlined
+- No bullets except in Plan (dashed list)
+- Signature line at bottom: [Physician name, MD / Date-Time]
+- If handwriting is ambiguous, flag it — don't guess drug names or doses`;
+
+let currentImageBase64 = null;
+let currentNoteText = '';
+
+function getConfig() {
+  try { return JSON.parse(localStorage.getItem('ldnote_config') || '{}'); }
+  catch { return {}; }
+}
+
+function setConfig(obj) {
+  const current = getConfig();
+  localStorage.setItem('ldnote_config', JSON.stringify({...current, ...obj}));
+}
+
+function init() {
+  const config = getConfig();
+  if (config.apiKey && config.email) { showMain(); }
+  else { document.getElementById('setupScreen').style.display = 'flex'; }
+}
+
+function saveSetup() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  if (!key || !email) { showToast('Please fill in both fields', true); return; }
+  setConfig({ apiKey: key, email: email, model: 'claude-sonnet-4-5-20250514' });
+  showMain();
+}
+
+function showMain() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display = 'flex';
+}
+
+function handleImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxWidth = 1500;
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      currentImageBase64 = dataUrl.split(',')[1];
+      document.getElementById('previewImg').src = dataUrl;
+      showScreen('preview');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function cancelImage() {
+  currentImageBase64 = null;
+  document.getElementById('fileInput').value = '';
+  showScreen('capture');
+}
+
+async function sendToClaudeAPI() {
+  const config = getConfig();
+  if (!config.apiKey) { showToast('No API key configured', true); return; }
+  showScreen('processing');
+  const model = config.model || 'claude-sonnet-4-5-20250514';
+  const body = {
+    model: model,
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: currentImageBase64 } },
+        { type: 'text', text: 'Parse this L&D notepad page into a structured expanded SOAP note. Flag anything unclear or clinically inconsistent.' }
+      ]
+    }]
+  };
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error('API error ' + response.status + ': ' + err);
+    }
+    const data = await response.json();
+    const text = data.content.filter(c => c.type === 'text').map(c => c.text).join('\\n');
+    currentNoteText = text;
+    document.getElementById('resultText').textContent = text;
+    showScreen('result');
+  } catch (err) {
+    console.error(err);
+    showToast('Error: ' + err.message, true);
+    showScreen('capture');
+  }
+}
+
+function copyNote() {
+  navigator.clipboard.writeText(currentNoteText).then(() => {
+    showToast('Copied to clipboard');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = currentNoteText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied to clipboard');
+  });
+}
+
+function emailNote() {
+  const config = getConfig();
+  const subject = encodeURIComponent('L&D Note — ' + new Date().toLocaleDateString('en-CA') + ' ' + new Date().toLocaleTimeString('en-CA', {hour:'2-digit', minute:'2-digit'}));
+  const body = encodeURIComponent(currentNoteText);
+  window.location.href = 'mailto:' + config.email + '?subject=' + subject + '&body=' + body;
+}
+
+function newNote() {
+  currentImageBase64 = null;
+  currentNoteText = '';
+  document.getElementById('fileInput').value = '';
+  showScreen('capture');
+}
+
+function showScreen(name) {
+  document.getElementById('captureArea').style.display = name === 'capture' ? 'flex' : 'none';
+  document.getElementById('previewArea').className = 'preview-area' + (name === 'preview' ? ' active' : '');
+  document.getElementById('processingArea').className = 'processing' + (name === 'processing' ? ' active' : '');
+  document.getElementById('resultArea').className = 'result-area' + (name === 'result' ? ' active' : '');
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+function showSettings() {
+  const config = getConfig();
+  document.getElementById('settingsApiKey').value = config.apiKey || '';
+  document.getElementById('settingsEmail').value = config.email || '';
+  document.getElementById('settingsModel').value = config.model || 'claude-sonnet-4-5-20250514';
+  document.getElementById('settingsModal').className = 'modal-overlay active';
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').className = 'modal-overlay';
+}
+
+function saveSettings() {
+  const key = document.getElementById('settingsApiKey').value.trim();
+  const email = document.getElementById('settingsEmail').value.trim();
+  const model = document.getElementById('settingsModel').value;
+  if (!key || !email) { showToast('Please fill in all fields', true); return; }
+  setConfig({ apiKey: key, email: email, model: model });
+  closeSettings();
+  showToast('Settings saved');
+}
+
+init();
+</script>
+</body>
+</html>
