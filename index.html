@@ -161,6 +161,22 @@
   .btn-row { display: flex; gap: 10px; }
   .btn-row .btn { max-width: none; }
 
+  .note-directions {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e8e8e8;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    resize: none;
+    outline: none;
+  }
+
+  .note-directions:focus { border-color: #4a9eff; }
+  .note-directions::placeholder { color: #555; }
+
   .btn-secondary {
     background: #1a1a1a;
     color: #888;
@@ -320,6 +336,7 @@
     </div>
     <div id="previewArea" class="preview-area">
       <img id="previewImg" class="preview-img">
+      <textarea id="noteDirections" class="note-directions" placeholder="Optional: directions for this note (e.g. 'short baby d/c note', 'focus on preeclampsia workup')" rows="2"></textarea>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="cancelImage()">Retake</button>
         <button class="btn btn-primary" onclick="sendToClaudeAPI()">Parse Note</button>
@@ -371,6 +388,9 @@ CLINICAL FRAMEWORK:
 - NST classification: Normal / Atypical / Abnormal (SOGC, not ACOG)
 - Name diagnoses when criteria are met. Do not hedge. (UPCR >30 + hypertension = preeclampsia.)
 - Flag anything clinically inconsistent or unclear
+- All visits are at the hospital (triage/L&D), not clinic. Do not say "presenting for antenatal visit" — say "presenting for [specific reason]"
+- A date in the near future without context = EDD
+- Output plain text only. No markdown formatting, no **bold**, no headers with #. Just clean text with section labels.
 
 NOTE STRUCTURE:
 1. Chief Complaint — reason for presentation + relevant pertinent negatives + presenting vitals/data
@@ -396,8 +416,9 @@ DEFAULTS (assume unless told otherwise):
 - Fetal movement: Normal
 - LOF/PV bleeding/contractions: None (unless presenting in labour)
 - Station: -3 for nullips/unengaged
-- OB history complications: Uncomplicated unless stated
-- Prenatal labs not mentioned: flag as "not documented"
+- OB history complications: Uncomplicated unless stated. Do not flag birth weight or GA at previous deliveries unless physician documents them as relevant.
+- Prenatal labs (CBC, HIV, antibody screen, GBS, Rh, GDM, HepB, Syphilis): Assume normal if not mentioned. Only flag as "not documented" if the entire prenatal lab section is missing.
+- If no red flags in current history, state "pregnancy has been unremarkable" or "low-risk pregnancy"
 
 PERTINENT NEGATIVES BY PRESENTATION:
 - ↑BP/Preeclampsia: No HA, visual changes, epigastric/RUQ pain, dyspnea, no LOF, no PVB, FM normal, no contractions
@@ -406,13 +427,18 @@ PERTINENT NEGATIVES BY PRESENTATION:
 - APH: Quantify, placental location, presentation, FHR
 
 STYLE:
-- Lean. No repetition. No filler.
+- Lean. No repetition. No filler. No redundant qualifiers (e.g., "GTT neg (GDM ruled out)" — just "GTT neg").
 - Don't repeat "without severe features" in every line
 - Don't write "monitor for X" — she's admitted
 - Don't say "per SOGC guidelines" unless controversial
 - Use generic drug names (Cervidil, not Cervidil (dinoprostone))
 - Informed consent: Include specific risks for each intervention. Patient verbalized understanding and consented.
-- Section headers bold/underlined
+- Vitals: Transcribe as written. Do not comment on missing vitals (no "others not documented").
+- NST: Document as "NST: normal tracing" (not "normal (checkmark)"). If abnormal or variants, physician will specify.
+- Labs/Imaging: Only include sections if labs or imaging were done TODAY. Do not restate old labs under Labs. If nothing done today, omit the section entirely.
+- Assessment: Do not include ruled-out diagnoses. State what IS the diagnosis/clinical picture, not what it isn't.
+- OB history: Keep concise. Do not flag birth weight or GA at previous deliveries unless physician notes them.
+- Section labels in plain text (no bold, no markdown formatting)
 - No bullets except in Plan (dashed list)
 - Signature line at bottom: [Physician name, MD / Date-Time]
 - If handwriting is ambiguous, flag it — don't guess drug names or doses
@@ -435,7 +461,17 @@ Defaults (assume unless told otherwise):
 - Vitamin K and erythromycin given (standard of care)
 - Metabolic screen: done/pending unless stated
 
-Same style rules: lean, no repetition, no filler. Signature line at bottom.`;
+Same style rules: lean, no repetition, no filler. Signature line at bottom.
+
+WNL NEWBORN PHYSICAL EXAM (use when physician writes "WNL" or "PE normal"):
+General: Well-appearing, appropriate for age.
+HEENT: Normal suture lines, flat fontanelles. Clavicles normal. Normal oropharynx, no cleft palate palpated. Red reflex deferred.
+CVS: Normal S1-S2 heart sounds, no additional murmurs or heart sounds. Normal femoral pulses bilaterally. Baby is pink and well perfused.
+Resp: Good air entry bilaterally. No increased work of breathing or grunting. Strong cry.
+Abdo: Soft, nontender, no palpable masses. Three-vessel cord.
+GU: Normal genitalia.
+MSK: Spine normal. No sacral dimple. Hips stable bilaterally.
+Neuro: Normal tone. Normal grasp and suck reflexes. Normal Moro reflex.`;
 
 let currentImageBase64 = null;
 let currentNoteText = '';
@@ -512,7 +548,7 @@ async function sendToClaudeAPI() {
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: currentImageBase64 } },
-        { type: 'text', text: 'Parse this L&D notepad page into a structured expanded SOAP note. Flag anything unclear or clinically inconsistent.' }
+        { type: 'text', text: 'Parse this L&D notepad page into a structured expanded SOAP note. Flag anything unclear or clinically inconsistent.' + (document.getElementById('noteDirections').value.trim() ? '\\n\\nPhysician directions: ' + document.getElementById('noteDirections').value.trim() : '') }
       ]
     }]
   };
@@ -568,6 +604,7 @@ function newNote() {
   currentImageBase64 = null;
   currentNoteText = '';
   document.getElementById('fileInput').value = '';
+  document.getElementById('noteDirections').value = '';
   showScreen('capture');
 }
 
